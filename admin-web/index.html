@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>墨境艺术 · 管理后台</title>
+<style>
+  :root { --c: #b8562b; --bd: #e5e5e5; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.5 -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; color: #222; background: #f5f5f5; }
+  [hidden] { display: none !important; }
+  header { background: #fff; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--bd); }
+  main { max-width: 1100px; margin: 20px auto; padding: 0 16px; }
+  .box { background: #fff; border: 1px solid var(--bd); border-radius: 8px; padding: 16px; }
+  button { font: inherit; padding: 6px 14px; border: 1px solid var(--bd); background: #fff; border-radius: 6px; cursor: pointer; }
+  button.p { background: var(--c); border-color: var(--c); color: #fff; }
+  button.l { border: 0; background: none; color: var(--c); padding: 0 8px; }
+  input, textarea { font: inherit; width: 100%; padding: 6px 8px; border: 1px solid var(--bd); border-radius: 6px; }
+  label { display: block; margin: 12px 0 4px; color: #666; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .tabs button.on { background: var(--c); border-color: var(--c); color: #fff; }
+  .bar { display: flex; justify-content: space-between; margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+  th { color: #888; font-weight: 500; }
+  td img { width: 72px; height: 48px; object-fit: cover; border-radius: 4px; background: #eee; display: block; }
+  .off { color: #999; }
+  .mask { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: flex-start; justify-content: center; overflow: auto; padding: 40px 16px; }
+  .dlg { background: #fff; border-radius: 8px; width: 560px; max-width: 100%; padding: 20px; }
+  .dlg h3 { margin: 0 0 8px; }
+  .foot { margin-top: 16px; text-align: right; }
+  .foot button { margin-left: 8px; }
+  .err { color: #c00; margin-top: 8px; min-height: 20px; }
+  .chip { display: inline-block; padding: 3px 12px; margin: 0 8px 8px 0; border-radius: 16px; background: #f0f0f0; color: #888; cursor: pointer; user-select: none; }
+  .chip.on { background: var(--c); color: #fff; }
+  .stu { padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+  #login { max-width: 380px; margin: 100px auto; }
+</style>
+</head>
+<body>
+
+<div id="login" class="box">
+  <h3>管理后台登录</h3>
+  <label>接口地址</label>
+  <input id="api" placeholder="https://xxx.../admin">
+  <label>管理员令牌</label>
+  <input id="token" type="password" autocomplete="current-password">
+  <div class="foot"><button class="p" id="go">登录</button></div>
+  <div class="err" id="loginErr"></div>
+</div>
+
+<div id="app" hidden>
+  <header><b>墨境艺术 · 管理后台</b><button id="logout">退出</button></header>
+  <main>
+    <div class="tabs">
+      <button data-tab="course">课程</button>
+      <button data-tab="activity">活动</button>
+    </div>
+    <div class="box">
+      <div class="bar"><span id="count" class="off"></span><button class="p" id="add">＋ 新增</button></div>
+      <table><thead id="thead"></thead><tbody id="tbody"></tbody></table>
+    </div>
+  </main>
+</div>
+
+<div class="mask" id="mask" hidden><div class="dlg" id="dlg"></div></div>
+
+<script>
+const $ = (s) => document.querySelector(s)
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+
+let API = localStorage.getItem('api') || ''
+let TOKEN = sessionStorage.getItem('token') || ''
+let tab = 'course'
+let list = []
+let urls = {}
+
+async function call(action, data = {}) {
+  const res = await fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Token': TOKEN },
+    body: JSON.stringify({ action, ...data })
+  })
+  if (res.status === 401) { logout(); throw new Error('令牌无效或已失效') }
+  const r = await res.json()
+  if (r.err) throw new Error(r.err)
+  return r
+}
+
+// ---------- 登录
+$('#api').value = API
+async function login() {
+  API = $('#api').value.trim(); TOKEN = $('#token').value
+  $('#loginErr').textContent = ''
+  try {
+    const r = await call('check')
+    if (!r.admin) throw new Error('令牌不正确')
+    localStorage.setItem('api', API); sessionStorage.setItem('token', TOKEN)
+    show()
+  } catch (e) { $('#loginErr').textContent = e.message === 'Failed to fetch' ? '无法连接接口，请检查地址和跨域设置' : e.message }
+}
+function logout() { sessionStorage.removeItem('token'); TOKEN = ''; $('#app').hidden = true; $('#login').hidden = false }
+$('#go').onclick = login
+$('#token').onkeydown = (e) => e.key === 'Enter' && login()
+$('#logout').onclick = logout
+
+// ---------- 列表
+const COLS = {
+  course: ['封面', '名称', '价格', '老师', '状态', '操作'],
+  activity: ['封面', '名称', '价格', '时间 / 地点', '剩余名额', '状态', '操作']
+}
+const src = (c) => (c && c.startsWith('cloud://') ? urls[c] : c) || ''
+
+async function loadUrls(ids) {
+  const need = ids.filter((c) => c && c.startsWith('cloud://') && !urls[c])
+  if (need.length) Object.assign(urls, (await call('urls', { fileIDs: need })).urls)
+}
+
+async function load() {
+  document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab))
+  $('#add').textContent = '＋ 新增' + (tab === 'course' ? '课程' : '活动')
+  $('#thead').innerHTML = '<tr>' + COLS[tab].map((c) => `<th>${c}</th>`).join('') + '</tr>'
+  list = (await call('list', { type: tab })).list
+  await loadUrls(list.map((x) => x.cover)).catch(() => {})
+  $('#count').textContent = `共 ${list.length} 项`
+  $('#tbody').innerHTML = list.map((x) => `<tr class="${x.online ? '' : 'off'}">
+    <td><img src="${esc(src(x.cover))}" alt=""></td>
+    <td>${esc(x.title)}</td>
+    <td>¥${esc(x.price)}</td>
+    ${tab === 'course' ? `<td>${esc(x.teacher)}</td>` : `<td>${esc(x.date)}<br>${esc(x.place)}</td><td>${esc(x.left)}</td>`}
+    <td>${x.online ? '上架中' : '已下架'}</td>
+    <td>
+      <button class="l" data-a="edit" data-id="${esc(x.id)}">编辑</button>
+      <button class="l" data-a="online" data-id="${esc(x.id)}">${x.online ? '下架' : '上架'}</button>
+      ${tab === 'course' ? `<button class="l" data-a="stu" data-id="${esc(x.id)}">学员与进度</button>` : ''}
+    </td></tr>`).join('')
+}
+
+document.querySelectorAll('.tabs button').forEach((b) => (b.onclick = () => { tab = b.dataset.tab; load().catch(fail) }))
+$('#add').onclick = () => edit()
+$('#tbody').onclick = async (e) => {
+  const b = e.target.closest('button'); if (!b) return
+  const x = list.find((i) => i.id === b.dataset.id)
+  try {
+    if (b.dataset.a === 'edit') edit(x)
+    if (b.dataset.a === 'stu') students(x)
+    if (b.dataset.a === 'online') { await call('setOnline', { type: tab, id: x.id, online: !x.online }); await load() }
+  } catch (err) { fail(err) }
+}
+const fail = (e) => alert(e.message)
+
+// ---------- 弹窗
+const open = (html) => { $('#dlg').innerHTML = html; $('#mask').hidden = false }
+const close = () => { $('#mask').hidden = true }
+
+function field(id, label, val, extra = '') {
+  return `<label>${label}</label><input id="${id}" value="${esc(val)}" ${extra}>`
+}
+
+function edit(x = {}) {
+  const course = tab === 'course'
+  open(`<h3>${x.id ? '编辑' : '新增'}${course ? '课程' : '活动'}</h3>
+    ${field('f_title', '名称', x.title)}
+    ${field('f_price', '价格（元）', x.price, 'type="number" min="0" step="0.01"')}
+    ${course
+      ? field('f_teacher', '老师', x.teacher)
+      : field('f_date', '时间', x.date, 'placeholder="如 2026-10-18 09:00"') + field('f_place', '地点', x.place) + field('f_left', '名额', x.left, 'type="number" min="0" step="1"')}
+    <label>简介</label><textarea id="f_desc" rows="3">${esc(x.desc)}</textarea>
+    ${course ? `<label>课程目录（每行一节）</label><textarea id="f_lessons" rows="6">${esc((x.lessons || []).join('\n'))}</textarea>` : ''}
+    <label>封面（可上传图片，或粘贴图片链接）</label>
+    <input id="f_cover" value="${esc(x.cover)}">
+    <div style="margin-top:8px"><input type="file" id="f_file" accept="image/*" style="width:auto"> <img id="f_prev" src="${esc(src(x.cover))}" style="height:60px;vertical-align:middle;${x.cover ? '' : 'display:none'}"></div>
+    <div class="err" id="f_err"></div>
+    <div class="foot"><button id="f_cancel">取消</button><button class="p" id="f_save">保存</button></div>`)
+
+  $('#f_cancel').onclick = close
+  $('#f_file').onchange = async (e) => {
+    const file = e.target.files[0]; if (!file) return
+    $('#f_err').textContent = '上传中…'
+    try {
+      const { fileID } = await call('upload', { dataUrl: await compress(file) })
+      $('#f_cover').value = fileID
+      await loadUrls([fileID])
+      $('#f_prev').src = src(fileID); $('#f_prev').style.display = ''
+      $('#f_err').textContent = ''
+    } catch (err) { $('#f_err').textContent = err.message }
+  }
+  $('#f_save').onclick = async () => {
+    const item = { id: x.id, title: $('#f_title').value, price: $('#f_price').value, desc: $('#f_desc').value, cover: $('#f_cover').value.trim() }
+    if (course) { item.teacher = $('#f_teacher').value; item.lessons = $('#f_lessons').value.split('\n') }
+    else { item.date = $('#f_date').value; item.place = $('#f_place').value; item.left = $('#f_left').value }
+    try { await call('save', { type: tab, item }); close(); await load() } catch (err) { $('#f_err').textContent = err.message }
+  }
+}
+
+// 缩放到最长边 1200px 并转 JPEG，避免超过接口 3MB 限制
+function compress(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image(), u = URL.createObjectURL(file)
+    img.onload = () => {
+      const k = Math.min(1, 1200 / Math.max(img.width, img.height))
+      const c = document.createElement('canvas')
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k)
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height)
+      URL.revokeObjectURL(u); resolve(c.toDataURL('image/jpeg', 0.85))
+    }
+    img.onerror = () => reject(new Error('图片无法读取'))
+    img.src = u
+  })
+}
+
+async function students(course) {
+  const { lessons, students: stus } = await call('students', { courseId: course.id })
+  const draw = () => open(`<h3>${esc(course.title)} · 学员与进度</h3>
+    <div class="off">点击节次切换“已上课”</div>
+    ${stus.map((s, i) => `<div class="stu"><b>${esc(s.contact)}</b>（已上 ${s.done.length}/${lessons.length} 节）<div style="margin-top:8px">
+      ${lessons.map((l, j) => `<span class="chip ${s.done.includes(j) ? 'on' : ''}" data-s="${i}" data-j="${j}">${j + 1}. ${esc(l)}</span>`).join('')}</div></div>`).join('') || '<p class="off">暂无学员</p>'}
+    <div class="err" id="s_err"></div>
+    <div class="foot"><button id="s_close">关闭</button></div>`)
+  draw()
+  $('#dlg').onclick = async (e) => {
+    if (e.target.id === 's_close') return close()
+    const c = e.target.closest('.chip'); if (!c) return
+    const s = stus[+c.dataset.s], j = +c.dataset.j
+    const done = s.done.includes(j) ? s.done.filter((n) => n !== j) : [...s.done, j]
+    try { s.done = (await call('setProgress', { orderId: s.orderId, done })).done; draw() } catch (err) { $('#s_err').textContent = err.message }
+  }
+}
+
+$('#mask').onclick = (e) => e.target.id === 'mask' && close()
+
+function show() { $('#login').hidden = true; $('#app').hidden = false; load().catch(fail) }
+if (API && TOKEN) call('check').then((r) => (r.admin ? show() : logout())).catch(() => {})
+</script>
+</body>
+</html>

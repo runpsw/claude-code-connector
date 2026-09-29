@@ -1,4 +1,8 @@
-// 管理后台接口。环境变量 ADMIN_OPENIDS（逗号分隔）为管理员白名单；除 check 外每个动作都校验。
+// 管理后台接口，两种调用方式共用同一套逻辑：
+//  1) 小程序调用：按 ADMIN_OPENIDS（逗号分隔的管理员 openid 白名单）校验；
+//  2) 网页调用（HTTP 访问服务）：按请求头 X-Admin-Token 与环境变量 ADMIN_TOKEN（至少 16 位）校验。
+// 除 check 外每个动作都校验管理员身份。
+const crypto = require('crypto')
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
@@ -27,11 +31,9 @@ function clean(type, it) {
   return { data: { ...base, date: it.date.trim(), place: it.place.trim(), left } }
 }
 
-exports.main = async (event) => {
-  const { OPENID } = cloud.getWXContext()
-  const isAdmin = admins().includes(OPENID)
+async function handle(event, isAdmin, openid) {
   const { action, type } = event
-  if (action === 'check') return { admin: isAdmin, openid: OPENID }
+  if (action === 'check') return { admin: isAdmin, openid }
   if (!isAdmin) return { err: '无权限' }
 
   if (['list', 'save', 'setOnline'].includes(action) && !COLL[type]) return { err: '参数错误' }
@@ -80,5 +82,54 @@ exports.main = async (event) => {
     return { done }
   }
 
+  if (action === 'upload') {
+    const m = /^data:image\/(jpeg|png|webp);base64,(.+)$/.exec(String(event.dataUrl || ''))
+    if (!m) return { err: '图片格式不支持' }
+    const buf = Buffer.from(m[2], 'base64')
+    if (!buf.length || buf.length > 3 * 1024 * 1024) return { err: '图片过大（限 3MB）' }
+    const ext = m[1] === 'jpeg' ? 'jpg' : m[1]
+    const r = await cloud.uploadFile({ cloudPath: `covers/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`, fileContent: buf })
+    return { fileID: r.fileID }
+  }
+
+  // 把云存储 fileID 换成临时链接，供网页预览封面
+  if (action === 'urls') {
+    const ids = (Array.isArray(event.fileIDs) ? event.fileIDs : []).filter((x) => typeof x === 'string' && x.startsWith('cloud://')).slice(0, 100)
+    if (!ids.length) return { urls: {} }
+    const r = await cloud.getTempFileURL({ fileList: ids })
+    return { urls: Object.fromEntries(r.fileList.filter((f) => f.tempFileURL).map((f) => [f.fileID, f.tempFileURL])) }
+  }
+
   return { err: '未知操作' }
+}
+
+const sha = (x) => crypto.createHash('sha256').update(String(x)).digest()
+function tokenOk(t) {
+  const want = process.env.ADMIN_TOKEN || ''
+  return want.length >= 16 && typeof t === 'string' && crypto.timingSafeEqual(sha(t), sha(want))
+}
+
+async function http(event) {
+  const cors = {
+    'Access-Control-Allow-Origin': process.env.ALLOW_ORIGIN || '*',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Token',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  }
+  const reply = (statusCode, obj) => ({ statusCode, headers: { ...cors, 'Content-Type': 'application/json' }, body: JSON.stringify(obj) })
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors, body: '' }
+  if (event.httpMethod !== 'POST') return reply(405, { err: '仅支持 POST' })
+  let body
+  try {
+    const raw = event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString() : event.body
+    body = JSON.parse(raw || '{}')
+  } catch (e) { return reply(400, { err: '请求格式错误' }) }
+  const h = event.headers || {}
+  const r = await handle(body, tokenOk(h['x-admin-token'] || h['X-Admin-Token']), 'web')
+  return reply(r.err === '无权限' ? 401 : 200, r)
+}
+
+exports.main = async (event) => {
+  if (event.httpMethod) return http(event)
+  const { OPENID } = cloud.getWXContext()
+  return handle(event, admins().includes(OPENID), OPENID)
 }
