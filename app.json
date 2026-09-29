@@ -3,7 +3,10 @@
     "pages/index/index",
     "pages/course/course",
     "pages/activity/activity",
-    "pages/mine/mine"
+    "pages/mine/mine",
+    "pages/admin/index/index",
+    "pages/admin/edit/edit",
+    "pages/admin/students/students"
   ],
   "window": {
     "navigationBarTitleText": "墨境艺术",

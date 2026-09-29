@@ -1,0 +1,11 @@
+<wxs module="u">
+module.exports = { has: function (arr, i) { return arr.indexOf(i) >= 0 } }
+</wxs>
+<view class="card pad" wx:for="{{students}}" wx:for-item="stu" wx:for-index="s" wx:key="orderId">
+  <view class="title">{{stu.contact}}</view>
+  <view class="sub">已上 {{stu.done.length}}/{{lessons.length}} 节，点击切换</view>
+  <view class="chips">
+    <view wx:for="{{lessons}}" wx:key="*this" class="chip {{u.has(stu.done,index)?'on':''}}" data-s="{{s}}" data-i="{{index}}" bindtap="toggle">{{index+1}}. {{item}}</view>
+  </view>
+</view>
+<view wx:if="{{!students.length}}" style="text-align:center;color:#aaa;padding:60rpx 0">暂无学员</view>

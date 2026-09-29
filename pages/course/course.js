@@ -17,9 +17,5 @@ Page({
   },
   buy() {
     api.buy('course', this.id).then(() => { wx.showToast({ title: '购买成功' }); this.refresh() }).catch(() => {})
-  },
-  toggle(e) {
-    if (!this.data.bought) return wx.showToast({ title: '购买后可学习', icon: 'none' })
-    api.toggle(this.id, +e.currentTarget.dataset.i).then((r) => r.done && this.setData({ done: r.done }))
   }
 })

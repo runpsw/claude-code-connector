@@ -18,16 +18,18 @@ exports.main = async (event) => {
   const { OPENID, ENV } = cloud.getWXContext()
   const { type, id } = event
   if (!COLL[type] || typeof id !== 'string') return { err: '参数错误' }
+  const contact = typeof event.contact === 'string' ? event.contact.trim() : ''
+  if (!contact || contact.length > 50) return { err: '请填写联系方式' }
 
   const item = (await db.collection(COLL[type]).doc(id).get().catch(() => ({}))).data
-  if (!item) return { err: '商品不存在' }
+  if (!item || item.online === false) return { err: '商品不存在或已下架' }
   if (type === 'activity' && item.left <= 0) return { err: '名额已满' }
 
   const paid = await db.collection('orders').where({ openid: OPENID, type, itemId: id, status: 'paid' }).count()
   if (paid.total) return { err: '已购买' }
 
   const { _id } = await db.collection('orders').add({
-    data: { openid: OPENID, type, itemId: id, title: item.title, fee: item.price, status: 'pending', done: [], createdAt: db.serverDate() }
+    data: { openid: OPENID, type, itemId: id, title: item.title, contact, fee: item.price, status: 'pending', done: [], createdAt: db.serverDate() }
   })
 
   if (process.env.PAY_MODE === 'mock') {

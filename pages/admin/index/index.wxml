@@ -1,0 +1,18 @@
+<view class="tabs">
+  <view class="tab {{tab===0?'on':''}}" data-i="0" bindtap="onTab">课程</view>
+  <view class="tab {{tab===1?'on':''}}" data-i="1" bindtap="onTab">活动</view>
+</view>
+<view class="card pad">
+  <button class="btn" bindtap="add">＋ 新增{{tab===0?'课程':'活动'}}</button>
+</view>
+<view class="card pad" wx:for="{{lists[tab]}}" wx:key="id">
+  <view class="row">
+    <view class="title">{{item.title}}</view>
+    <switch checked="{{item.online}}" data-id="{{item.id}}" bindchange="online" color="#b8562b" />
+  </view>
+  <view class="sub">¥{{item.price}} · {{item.online ? '上架中' : '已下架'}}<block wx:if="{{tab===1}}"> · 剩余 {{item.left}}</block></view>
+  <view class="acts">
+    <text class="link" data-id="{{item.id}}" bindtap="edit">编辑</text>
+    <text wx:if="{{tab===0}}" class="link" data-id="{{item.id}}" bindtap="students">学员与进度</text>
+  </view>
+</view>

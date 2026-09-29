@@ -1,0 +1,6 @@
+.f { display: flex; align-items: center; padding: 20rpx 0; border-bottom: 1rpx solid #f0f0f0; }
+.f text { width: 200rpx; color: #666; flex-shrink: 0; }
+.f input { flex: 1; }
+.f.col { flex-direction: column; align-items: stretch; }
+.f.col text { width: auto; margin-bottom: 12rpx; }
+.f textarea { width: 100%; }
