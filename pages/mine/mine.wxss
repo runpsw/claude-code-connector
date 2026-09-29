@@ -1,0 +1,2 @@
+.h { padding: 24rpx 24rpx 0; font-weight: 600; font-size: 30rpx; }
+.empty { text-align: center; color: #aaa; padding: 40rpx 0; }

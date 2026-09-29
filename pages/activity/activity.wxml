@@ -1,0 +1,12 @@
+<image class="cover" src="{{act.cover}}" mode="aspectFill" />
+<view class="card pad" style="margin-bottom:180rpx">
+  <view class="title">{{act.title}}</view>
+  <view class="sub">时间：{{act.date}}</view>
+  <view class="sub">地点：{{act.place}}</view>
+  <view class="sub">剩余名额：{{act.left}}</view>
+  <view class="sub" style="color:#444;font-size:28rpx;line-height:1.6">{{act.desc}}</view>
+</view>
+<view class="bottom-bar row">
+  <view class="price">¥{{act.price}}</view>
+  <button class="btn" disabled="{{bought}}" bindtap="buy">{{bought?'已报名':'立即报名'}}</button>
+</view>

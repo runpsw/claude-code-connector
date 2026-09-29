@@ -1,0 +1,21 @@
+<wxs module="u">
+module.exports = { has: function (arr, i) { return arr.indexOf(i) >= 0 } }
+</wxs>
+<image class="cover" src="{{course.cover}}" mode="aspectFill" />
+<view class="card pad">
+  <view class="title">{{course.title}}</view>
+  <view class="sub">{{course.teacher}}</view>
+  <view class="sub" style="color:#444;font-size:28rpx;line-height:1.6">{{course.desc}}</view>
+</view>
+<view class="card pad" style="margin-bottom:180rpx">
+  <view class="title">课程目录（{{done.length}}/{{course.lessons.length}}）</view>
+  <view class="lesson row" wx:for="{{course.lessons}}" wx:key="*this" data-i="{{index}}" bindtap="toggle">
+    <text>{{index+1}}. {{item}}</text>
+    <text wx:if="{{bought}}" style="color:{{u.has(done,index)?'#b8562b':'#bbb'}}">{{u.has(done,index)?'已学完':'标记学完'}}</text>
+    <text wx:else style="color:#bbb">🔒</text>
+  </view>
+</view>
+<view class="bottom-bar row">
+  <view class="price">¥{{course.price}}</view>
+  <button class="btn" disabled="{{bought}}" bindtap="buy">{{bought?'已购买':'立即购买'}}</button>
+</view>

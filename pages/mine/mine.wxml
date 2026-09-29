@@ -1,0 +1,14 @@
+<view class="h">我的课程</view>
+<view class="card pad" wx:for="{{myCourses}}" wx:key="id" data-id="{{item.id}}" bindtap="toCourse">
+  <view class="row"><view class="title">{{item.title}}</view><view class="sub">{{item.n}}/{{item.lessons.length}} 节</view></view>
+  <view class="progress"><view style="width:{{item.pct}}%"></view></view>
+  <view class="sub">学习进度 {{item.pct}}%</view>
+</view>
+<view wx:if="{{!myCourses.length}}" class="empty">还没有购买课程，去首页看看吧</view>
+
+<view class="h">我的活动</view>
+<view class="card pad" wx:for="{{myActs}}" wx:key="id" data-id="{{item.id}}" bindtap="toActivity">
+  <view class="title">{{item.title}}</view>
+  <view class="sub">{{item.date}} · {{item.place}}</view>
+</view>
+<view wx:if="{{!myActs.length}}" class="empty">暂无报名的活动</view>

@@ -1,0 +1,32 @@
+<view class="tabs">
+  <view wx:for="{{tabs}}" wx:key="*this" class="tab {{tab===index?'on':''}}" data-i="{{index}}" bindtap="onTab">{{item}}</view>
+</view>
+
+<block wx:if="{{tab===0}}">
+  <view class="card" wx:for="{{courses}}" wx:key="id" data-id="{{item.id}}" bindtap="toCourse">
+    <image class="cover" src="{{item.cover}}" mode="aspectFill" />
+    <view class="pad">
+      <view class="title">{{item.title}}</view>
+      <view class="sub">{{item.teacher}} · {{item.lessons.length}} 节课</view>
+      <view class="price">¥{{item.price}}</view>
+    </view>
+  </view>
+</block>
+
+<block wx:if="{{tab===1}}">
+  <view class="card" wx:for="{{activities}}" wx:key="id" data-id="{{item.id}}" bindtap="toActivity">
+    <image class="cover" src="{{item.cover}}" mode="aspectFill" />
+    <view class="pad">
+      <view class="title">{{item.title}}</view>
+      <view class="sub">{{item.date}} · {{item.place}}</view>
+      <view class="price">¥{{item.price}}</view>
+    </view>
+  </view>
+</block>
+
+<view wx:if="{{tab===2}}" class="card pad">
+  <view class="title">{{about.name}}</view>
+  <view class="sub" style="line-height:1.7;color:#444;font-size:28rpx">{{about.intro}}</view>
+  <view class="sub">地址：{{about.address}}</view>
+  <view class="sub" bindtap="call">电话：{{about.phone}}（点击拨打）</view>
+</view>
