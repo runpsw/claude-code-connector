@@ -2,7 +2,12 @@
   "description": "成人艺术培训小程序",
   "miniprogramRoot": "",
   "compileType": "miniprogram",
-  "setting": { "es6": true, "minified": true, "urlCheck": false },
+  "setting": {
+    "es6": true,
+    "minified": true,
+    "urlCheck": false
+  },
   "appid": "touristappid",
-  "projectname": "art-school"
+  "projectname": "art-school",
+  "cloudfunctionRoot": "cloudfunctions/"
 }

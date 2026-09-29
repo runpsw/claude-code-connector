@@ -1,27 +1,25 @@
-const { courses } = require('../../utils/data')
-const store = require('../../utils/store')
-const pay = require('../../utils/pay')
+const api = require('../../utils/api')
 Page({
   data: { course: null, bought: false, done: [] },
-  onLoad(q) { this.id = q.id; this.refresh() },
-  onShow() { if (this.id) this.refresh() },
+  onLoad(q) {
+    this.id = q.id
+    api.course(q.id).then((course) => {
+      wx.setNavigationBarTitle({ title: course.title })
+      this.setData({ course })
+    })
+  },
+  onShow() { this.refresh() },
   refresh() {
-    const course = courses.find((c) => c.id === this.id)
-    const rec = store.myCourses()[this.id]
-    wx.setNavigationBarTitle({ title: course.title })
-    this.setData({ course, bought: !!rec, done: rec ? rec.done : [] })
+    return api.mine().then((m) => {
+      const rec = m.courses[this.id]
+      this.setData({ bought: !!rec, done: rec ? rec.done : [] })
+    })
   },
   buy() {
-    const c = this.data.course
-    pay(c.title, c.price).then(() => {
-      store.buyCourse(c.id)
-      wx.showToast({ title: '购买成功' })
-      this.refresh()
-    }).catch(() => {})
+    api.buy('course', this.id).then(() => { wx.showToast({ title: '购买成功' }); this.refresh() }).catch(() => {})
   },
   toggle(e) {
     if (!this.data.bought) return wx.showToast({ title: '购买后可学习', icon: 'none' })
-    store.toggleLesson(this.id, +e.currentTarget.dataset.i)
-    this.refresh()
+    api.toggle(this.id, +e.currentTarget.dataset.i).then((r) => r.done && this.setData({ done: r.done }))
   }
 })

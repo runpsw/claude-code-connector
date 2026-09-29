@@ -1,20 +1,22 @@
-const { activities } = require('../../utils/data')
-const store = require('../../utils/store')
-const pay = require('../../utils/pay')
+const api = require('../../utils/api')
 Page({
   data: { act: null, bought: false },
   onLoad(q) {
     this.id = q.id
-    const act = activities.find((a) => a.id === q.id)
-    wx.setNavigationBarTitle({ title: act.title })
-    this.setData({ act, bought: store.hasActivity(q.id) })
+    api.activity(q.id).then((act) => {
+      wx.setNavigationBarTitle({ title: act.title })
+      this.setData({ act })
+    })
+    this.refresh()
+  },
+  refresh() {
+    return api.mine().then((m) => this.setData({ bought: m.activities.includes(this.id) }))
   },
   buy() {
-    const a = this.data.act
-    pay(a.title, a.price).then(() => {
-      store.buyActivity(a.id)
+    api.buy('activity', this.id).then(() => {
       wx.showToast({ title: '报名成功' })
-      this.setData({ bought: true })
+      this.refresh()
+      api.activity(this.id).then((act) => this.setData({ act }))
     }).catch(() => {})
   }
 })
