@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>成人艺术培训业务模型</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+/* 版式：单栏长文，一张全景图统领全文；正文 ~68 字宽，宽表与图各自横向滚动 */
+:root {
+  --bg: #f6f7f9;
+  --paper: #ffffff;
+  --fg: #1c2230;
+  --muted: #5a6475;
+  --line: #dde1e8;
+  --accent: #2b47c9;        /* 群青：主线 */
+  --accent-soft: #e7ebfb;
+  --accent-ink: #ffffff;
+  --ochre: #9a6a12;         /* 赭石：钱与规则 */
+  --ochre-soft: #f6eedc;
+  --neutral-soft: #eef0f4;
+  --serif: "Noto Serif SC", "Songti SC", "STSong", serif;
+  --sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12151c; --paper: #191d26; --fg: #e6e9ef; --muted: #9aa3b4; --line: #2c3240;
+    --accent: #8ea2ff; --accent-soft: #222b4d; --accent-ink: #10142a;
+    --ochre: #e0b665; --ochre-soft: #2e2716; --neutral-soft: #222733;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12151c; --paper: #191d26; --fg: #e6e9ef; --muted: #9aa3b4; --line: #2c3240;
+  --accent: #8ea2ff; --accent-soft: #222b4d; --accent-ink: #10142a;
+  --ochre: #e0b665; --ochre-soft: #2e2716; --neutral-soft: #222733;
+  color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--fg);
+  font: 15px/1.75 var(--sans);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 980px; margin: 0 auto; padding-block: 40px 64px; display: grid; gap: 48px; }
+.prose { max-width: 68ch; }
+h1, h2 { font-family: var(--serif); text-wrap: balance; line-height: 1.3; margin: 0; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.4rem; margin-bottom: 12px; }
+h3 { font-size: 1.05rem; margin: 20px 0 6px; }
+p { margin: 0 0 10px; }
+.eyebrow { font-size: 12px; letter-spacing: .12em; color: var(--muted); margin-bottom: 8px; }
+.lead { font-size: 1.08rem; color: var(--muted); margin-top: 12px; }
+.thesis {
+  border-left: 3px solid var(--accent); padding: 4px 0 4px 16px; margin: 20px 0 0;
+  font-family: var(--serif); font-size: 1.15rem; line-height: 1.6;
+}
+.tag { display: inline-block; font-size: 11px; padding: 0 6px; border-radius: 4px; background: var(--neutral-soft); color: var(--muted); vertical-align: 2px; margin-left: 4px; white-space: nowrap; }
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.figure { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.figure svg { display: block; min-width: 900px; width: 100%; height: auto; }
+.cap { font-size: 13px; color: var(--muted); margin-top: 10px; }
+
+/* SVG 元素着色全部走 token */
+.sv-stage { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.2; }
+.sv-stage-hot { fill: var(--accent); stroke: var(--accent); }
+.sv-t { fill: var(--fg); font-family: var(--sans); }
+.sv-t-hot { fill: var(--accent-ink); font-family: var(--sans); }
+.sv-muted { fill: var(--muted); font-family: var(--sans); }
+.sv-label { fill: var(--muted); font-family: var(--sans); font-size: 12px; letter-spacing: .08em; }
+.sv-pill { fill: var(--paper); stroke: var(--line); }
+.sv-role { fill: var(--neutral-soft); stroke: none; }
+.sv-prod { fill: var(--neutral-soft); stroke: var(--line); }
+.sv-act { fill: none; stroke: var(--muted); stroke-dasharray: 5 4; }
+.sv-band { fill: var(--ochre-soft); stroke: none; }
+.sv-ochre { fill: var(--ochre); font-family: var(--sans); }
+.sv-loop { fill: none; stroke: var(--accent); stroke-width: 1.5; }
+.sv-arrowhead { fill: var(--accent); }
+.sv-loopbg { fill: var(--paper); }
+.sv-rule { stroke: var(--line); }
+
+table { border-collapse: collapse; width: 100%; font-size: 14px; background: var(--paper); }
+th, td { border-bottom: 1px solid var(--line); padding: 10px 12px; text-align: left; vertical-align: top; }
+thead th { font-weight: 500; color: var(--muted); font-size: 12px; letter-spacing: .06em; background: var(--neutral-soft); white-space: nowrap; }
+.wide { min-width: 960px; }
+.stage-name { font-weight: 700; white-space: nowrap; }
+.stage-hot { color: var(--accent); }
+.from-to { color: var(--muted); font-size: 13px; white-space: nowrap; }
+td ul { margin: 0; padding-left: 1.1em; }
+.tablewrap { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.tablewrap .scroll table { border: 0; }
+
+.formula {
+  background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px;
+  font-variant-numeric: tabular-nums; display: grid; gap: 10px;
+}
+.f-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; }
+.f-lhs { font-weight: 700; min-width: 7em; }
+.f-op { color: var(--muted); }
+.f-term { padding: 1px 8px; border-radius: 5px; background: var(--accent-soft); white-space: nowrap; }
+.f-term small { color: var(--muted); font-size: 11px; margin-left: 4px; }
+.f-money .f-term { background: var(--ochre-soft); }
+.f-note { font-size: 13px; color: var(--muted); }
+
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 760px) { .grid3 { grid-template-columns: minmax(0, 1fr); } h1 { font-size: 1.6rem; } }
+.pillar { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; min-width: 0; }
+.pillar h3 { margin-top: 0; font-family: var(--serif); font-size: 1.1rem; }
+.pillar .q { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+.pillar ul { margin: 0; padding-left: 1.1em; }
+.pillar li { margin-bottom: 4px; }
+
+.diag { display: grid; gap: 8px; }
+.diag div { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+.diag b { color: var(--accent); }
+
+ol.confirm { padding-left: 1.3em; margin: 0; }
+ol.confirm li { margin-bottom: 8px; }
+.sources { font-size: 13px; color: var(--muted); }
+.sources a { color: var(--muted); }
+a { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+<style>body{margin:0}</style>
+</head>
+<body>
+<main>
+
+<header class="prose">
+  <div class="eyebrow">业务理解 · 与系统无关</div>
+  <h1>成人艺术培训业务模型</h1>
+  <p class="lead">用“一个公式、一条主线、三个支撑”把这门生意装进一张图。主线回答学员怎么来、怎么留；公式回答钱从哪来；三个支撑回答谁来做、卖什么、凭什么交付。</p>
+  <p class="thesis">这门生意的本质：把对艺术有兴趣的陌生人，变成持续来上课、愿意带朋友来的学员。价值在每一节课里兑现，钱先收后挣。</p>
+</header>
+
+<section>
+  <div class="prose">
+    <h2>全景图</h2>
+    <p>横向是主线，学员从左往右流动，最后通过转介绍回到起点。每一段下面依次是：这段看什么指标、谁主责、用什么产品。最下面两层是所有阶段共用的后台和底座。</p>
+  </div>
+  <div class="figure scroll" role="img" aria-label="成人艺术培训业务全景图">
+    <svg viewBox="0 0 1100 560" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" class="sv-arrowhead"/>
+        </marker>
+      </defs>
+
+      <!-- 转介绍回流 -->
+      <path d="M995,56 L995,22 L203,22 L203,52" class="sv-loop" marker-end="url(#ah)"/>
+      <rect x="500" y="10" width="200" height="24" rx="4" class="sv-loopbg"/>
+      <text x="600" y="27" text-anchor="middle" font-size="13" class="sv-t">转介绍带来新线索 · 飞轮</text>
+
+      <!-- 行标签 -->
+      <text x="12" y="92" class="sv-label">主线</text>
+      <text x="12" y="166" class="sv-label">关键指标</text>
+      <text x="12" y="222" class="sv-label">主责</text>
+      <text x="12" y="280" class="sv-label">产品</text>
+      <text x="12" y="334" class="sv-label">活动</text>
+      <text x="12" y="410" class="sv-label">后台</text>
+      <text x="12" y="496" class="sv-label">底座</text>
+      <line x1="12" y1="372" x2="1088" y2="372" class="sv-rule"/>
+
+      <!-- 主线 5 段（箭头形） -->
+      <polygon points="110,56 286,56 296,91 286,126 110,126" class="sv-stage"/>
+      <polygon points="308,56 484,56 494,91 484,126 308,126 318,91" class="sv-stage"/>
+      <polygon points="506,56 682,56 692,91 682,126 506,126 516,91" class="sv-stage"/>
+      <polygon points="704,56 880,56 890,91 880,126 704,126 714,91" class="sv-stage-hot"/>
+      <polygon points="902,56 1078,56 1088,91 1078,126 902,126 912,91" class="sv-stage"/>
+
+      <text x="200" y="86" text-anchor="middle" font-size="17" font-weight="700" class="sv-t">① 曝光引流</text>
+      <text x="200" y="109" text-anchor="middle" font-size="13" class="sv-muted">陌生人 → 线索</text>
+      <text x="402" y="86" text-anchor="middle" font-size="17" font-weight="700" class="sv-t">② 邀约试课</text>
+      <text x="402" y="109" text-anchor="middle" font-size="13" class="sv-muted">线索 → 到店体验</text>
+      <text x="600" y="86" text-anchor="middle" font-size="17" font-weight="700" class="sv-t">③ 转化成交</text>
+      <text x="600" y="109" text-anchor="middle" font-size="13" class="sv-muted">体验者 → 付费学员</text>
+      <text x="798" y="86" text-anchor="middle" font-size="17" font-weight="700" class="sv-t-hot">④ 教学交付</text>
+      <text x="798" y="109" text-anchor="middle" font-size="13" class="sv-t-hot">付费 → 常来上课</text>
+      <text x="996" y="86" text-anchor="middle" font-size="17" font-weight="700" class="sv-t">⑤ 留存增长</text>
+      <text x="996" y="109" text-anchor="middle" font-size="13" class="sv-muted">在读 → 续费 / 带人</text>
+
+      <!-- 关键指标 -->
+      <rect x="110" y="146" width="176" height="32" rx="16" class="sv-pill"/>
+      <text x="198" y="167" text-anchor="middle" font-size="13" class="sv-t">线索数 · 获客成本</text>
+      <rect x="308" y="146" width="176" height="32" rx="16" class="sv-pill"/>
+      <text x="396" y="167" text-anchor="middle" font-size="13" class="sv-t">邀约率 × 到课率</text>
+      <rect x="506" y="146" width="176" height="32" rx="16" class="sv-pill"/>
+      <text x="594" y="167" text-anchor="middle" font-size="13" class="sv-t">成交率 × 客单价</text>
+      <rect x="704" y="146" width="176" height="32" rx="16" class="sv-pill"/>
+      <text x="792" y="167" text-anchor="middle" font-size="13" class="sv-t">出勤 · 课消 · 满班率</text>
+      <rect x="902" y="146" width="176" height="32" rx="16" class="sv-pill"/>
+      <text x="990" y="167" text-anchor="middle" font-size="13" class="sv-t">续费率 · 转介绍率</text>
+
+      <!-- 主责 -->
+      <rect x="110" y="202" width="176" height="30" rx="6" class="sv-role"/>
+      <text x="198" y="222" text-anchor="middle" font-size="13" class="sv-t">市场</text>
+      <rect x="308" y="202" width="374" height="30" rx="6" class="sv-role"/>
+      <text x="495" y="222" text-anchor="middle" font-size="13" class="sv-t">课程顾问（体验课由老师上）</text>
+      <rect x="704" y="202" width="176" height="30" rx="6" class="sv-role"/>
+      <text x="792" y="222" text-anchor="middle" font-size="13" class="sv-t">老师 + 教务</text>
+      <rect x="902" y="202" width="176" height="30" rx="6" class="sv-role"/>
+      <text x="990" y="222" text-anchor="middle" font-size="13" class="sv-t">学员服务（学管）</text>
+
+      <!-- 产品阶梯 -->
+      <rect x="110" y="258" width="374" height="34" rx="6" class="sv-prod"/>
+      <text x="297" y="280" text-anchor="middle" font-size="13" class="sv-t">引流品：低价体验课</text>
+      <rect x="506" y="258" width="374" height="34" rx="6" class="sv-prod"/>
+      <text x="693" y="280" text-anchor="middle" font-size="13" class="sv-t">主营品：期课 / 课时卡</text>
+      <rect x="902" y="258" width="176" height="34" rx="6" class="sv-prod"/>
+      <text x="990" y="280" text-anchor="middle" font-size="13" class="sv-t">进阶品：进阶班 · 私教</text>
+
+      <!-- 活动：插在多个位置 -->
+      <rect x="110" y="312" width="374" height="34" rx="6" class="sv-act"/>
+      <text x="297" y="334" text-anchor="middle" font-size="13" class="sv-t">公开活动 / 体验型活动（观展、写生、手作）</text>
+      <rect x="902" y="312" width="176" height="34" rx="6" class="sv-act"/>
+      <text x="990" y="334" text-anchor="middle" font-size="13" class="sv-t">老学员活动 · 作品展</text>
+
+      <!-- 后台 -->
+      <rect x="110" y="390" width="968" height="40" rx="6" class="sv-band"/>
+      <text x="594" y="415" text-anchor="middle" font-size="14" class="sv-ochre">课程产品与教研（卖什么、怎么定价）　·　财务（收费、退费、老师课酬、核算）</text>
+
+      <!-- 底座 -->
+      <rect x="110" y="452" width="476" height="80" rx="6" class="sv-prod"/>
+      <text x="348" y="482" text-anchor="middle" font-size="14" font-weight="700" class="sv-t">资源：决定能卖多少</text>
+      <text x="348" y="510" text-anchor="middle" font-size="13" class="sv-muted">老师 × 教室 × 时段 × 班额 = 可卖课位</text>
+      <rect x="602" y="452" width="476" height="80" rx="6" class="sv-prod"/>
+      <text x="840" y="482" text-anchor="middle" font-size="14" font-weight="700" class="sv-t">规则：决定怎么兑现</text>
+      <text x="840" y="510" text-anchor="middle" font-size="13" class="sv-muted">课时有效期 · 请假补课 · 退费按已上课时折算</text>
+    </svg>
+  </div>
+  <p class="cap">④ 教学交付用实色标出：前三段都是在“卖”，只有这一段在“兑现”。留存是交付的结果，不是独立的运营动作。</p>
+</section>
+
+<section>
+  <div class="prose">
+    <h2>主线：五段逐一拆开</h2>
+    <p>五段沿用你提出的“曝光、邀约试课、转化成交、老学员留存”，在成交和留存之间补上“教学交付”。原因是留存靠上课体验换来，跳过交付，就看不到价值在哪里产生。</p>
+  </div>
+  <div class="tablewrap"><div class="scroll">
+    <table class="wide">
+      <thead>
+        <tr><th>阶段</th><th>机构的目标</th><th>关键动作</th><th>主责</th><th>看什么</th><th>成人艺术的特点与常见卡点</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="stage-name">① 曝光引流</div><div class="from-to">陌生人 → 线索</div></td>
+          <td>让对的人知道你，并愿意留下联系方式</td>
+          <td><ul><li>发作品、老师、课堂片段</li><li>公开活动</li><li>老带新、异业合作</li></ul></td>
+          <td>市场</td>
+          <td>线索数、留资率、获客成本</td>
+          <td>成人做决定时看得见的东西最有说服力：学员作品、老师、环境<span class="tag">推断</span>。卡点：看过不留资，曝光没有沉淀成线索。</td>
+        </tr>
+        <tr>
+          <td><div class="stage-name">② 邀约试课</div><div class="from-to">线索 → 到店体验</div></td>
+          <td>让线索真的来上一次课</td>
+          <td><ul><li>及时跟进、约时间</li><li>课前提醒</li><li>用低价体验课或体验活动降低门槛</li></ul></td>
+          <td>课程顾问</td>
+          <td>邀约率、到课率</td>
+          <td>成人时间难约，答应了不来很常见，所以“邀约”和“到课”要分开看。卡点：跟进慢，线索放凉。</td>
+        </tr>
+        <tr>
+          <td><div class="stage-name">③ 转化成交</div><div class="from-to">体验者 → 付费学员</div></td>
+          <td>卖出适合这个人的主营产品</td>
+          <td><ul><li>设计体验课</li><li>课后沟通、推荐产品</li><li>签约收费</li></ul></td>
+          <td>课程顾问，老师配合</td>
+          <td>成交率、首单客单价</td>
+          <td>体验课当堂能带走一张作品，是最强的成交理由<span class="tag">推断</span>。卡点：体验很好，但嫌贵或怕坚持不下来。</td>
+        </tr>
+        <tr>
+          <td><div class="stage-name stage-hot">④ 教学交付</div><div class="from-to">付费 → 常来上课</div></td>
+          <td>兑现价值，把买的课上掉</td>
+          <td><ul><li>排课、上课</li><li>签到消课</li><li>作品点评</li><li>请假补课</li></ul></td>
+          <td>老师 + 教务</td>
+          <td>出勤率、课消、满班率、满意度</td>
+          <td>老师就是产品本身。成人常因工作缺课，请假补课规则很关键。卡点：买了不来上，没上的课时会变成续费失败和退费的风险<span class="tag">推断</span>。</td>
+        </tr>
+        <tr>
+          <td><div class="stage-name">⑤ 留存增长</div><div class="from-to">在读 → 续费 / 带人</div></td>
+          <td>让学员继续学，并带朋友来</td>
+          <td><ul><li>剩余课时提醒</li><li>阶段作品回顾</li><li>推荐进阶课</li><li>作品展、写生、社群</li><li>老带新激励</li></ul></td>
+          <td>学员服务（学管）</td>
+          <td>续费率、转介绍率</td>
+          <td>成人续费靠的是成就感和圈子，不是考级成绩<span class="tag">推断</span>。卡点：课时快用完才去谈续费，往往太晚。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div></div>
+</section>
+
+<section>
+  <div class="prose">
+    <h2>一个公式：主线上的每一段，都是公式里的一个因子</h2>
+    <p>把主线换成数字，就是这门生意的收入公式。哪一段做得差，公式里对应的那个数就小，收入就被它卡住。</p>
+  </div>
+  <div class="formula">
+    <div class="f-row"><span class="f-lhs">新生收入</span><span class="f-op">=</span>
+      <span class="f-term">线索数<small>①</small></span><span class="f-op">×</span>
+      <span class="f-term">邀约率 × 到课率<small>②</small></span><span class="f-op">×</span>
+      <span class="f-term">成交率<small>③</small></span><span class="f-op">×</span>
+      <span class="f-term">首单客单价<small>③</small></span></div>
+    <div class="f-row"><span class="f-lhs">老生收入</span><span class="f-op">=</span>
+      <span class="f-term">在读学员数<small>④</small></span><span class="f-op">×</span>
+      <span class="f-term">续费率<small>⑤</small></span><span class="f-op">×</span>
+      <span class="f-term">续费客单价<small>⑤</small></span>
+      <span class="f-op">；转介绍率<small>⑤</small> 又回流成线索数<small>①</small></span></div>
+    <div class="f-row f-money"><span class="f-lhs">利润</span><span class="f-op">=</span>
+      <span class="f-term">确认收入</span><span class="f-op">−</span>
+      <span class="f-term">获客成本</span><span class="f-op">−</span>
+      <span class="f-term">交付成本（老师课酬 + 场地）</span><span class="f-op">−</span>
+      <span class="f-term">管理成本</span></div>
+    <div class="f-note">各项比例一般用相邻两段的人数相除，比如到课率 = 到课人数 ÷ 邀约人数。具体口径由机构自己定；公开资料里没有可信的行业基准值。</div>
+  </div>
+
+  <div class="prose">
+    <h3>钱的两条线：收到钱和挣到钱不是一回事</h3>
+    <p>学员预付学费，钱先到账，这是现金。只有课上掉了，对应那部分才是挣到的收入。没上的部分本质上是欠学员的，所以：</p>
+    <ul>
+      <li>确认收入 = 已上课时 × 课时单价</li>
+      <li>预收余额 = 已收学费 − 已确认收入 − 已退费，这是对学员的负债</li>
+    </ul>
+    <p>业内把预收款挪作他用，是机构出问题的常见原因。按 2025 年 5 月 1 日施行的预付式消费司法解释，“概不退款”条款无效，退款按预付款扣除已上课部分计算（条文号来自律所解读，未核对原文）。</p>
+    <h3>每节课赚不赚钱，看坐了几个人</h3>
+    <p>每人每课时成本 = 这节课的成本（老师课酬 + 分摊房租）÷ 实到人数。课价不变时，坐满的课和只来两个人的课，利润差得很远，所以满班率直接决定交付环节是否盈利。整体上，一个学员的终身价值（在机构的全部消费）必须明显大于招他进来的获客成本。续费率和转介绍率是拉开这个差距最主要的两个杠杆<span class="tag">推断</span>。</p>
+  </div>
+</section>
+
+<section>
+  <div class="prose">
+    <h2>三个支撑</h2>
+    <p>主线说明学员怎么流动，支撑说明机构靠什么让这条线转起来。</p>
+  </div>
+  <div class="grid3">
+    <div class="pillar">
+      <h3>组织：谁来做</h3>
+      <div class="q">每段主线都要有人对结果负责</div>
+      <ul>
+        <li><b>市场</b>：曝光、线索</li>
+        <li><b>课程顾问</b>：邀约、试课、成交</li>
+        <li><b>老师</b>：上课、点评，几乎参与每一段</li>
+        <li><b>教务</b>：排课、消课、请假补课</li>
+        <li><b>学员服务</b>：续费、转介绍</li>
+        <li><b>课程产品与教研</b>：卖什么、怎么定价</li>
+        <li><b>财务</b>：收费、退费、核算</li>
+      </ul>
+      <p class="cap">职能不等于岗位。三五个人的画室常见合并方式：校长管市场、产品和财务；顾问兼前台、教务和学员服务；老师兼一部分学员服务<span class="tag">推断</span>。之前“招生、教务、教学、财务、运营”的划分，问题在于“运营”和“招生”有重叠，又漏了续费和产品的负责人。</p>
+    </div>
+    <div class="pillar">
+      <h3>产品：卖什么</h3>
+      <div class="q">每类产品负责主线上的一段</div>
+      <ul>
+        <li><b>引流品</b>：低价体验课，负责 ②</li>
+        <li><b>主营品</b>：期课（固定班 N 次）或课时卡（N 课时，有效期内自己约），负责 ③④</li>
+        <li><b>进阶品</b>：进阶班、私教、写生营，负责 ⑤</li>
+        <li><b>周边</b>：画材、装裱</li>
+        <li><b>活动</b>：能插在 ①②⑤ 多个位置，是工具，不只是一个商品</li>
+      </ul>
+      <p class="cap">收费形态有单次、期课、课时卡、会员四种。海外成人画室常见次卡加单次课加会员价；国内成人机构的组合方式，没查到可靠资料。</p>
+    </div>
+    <div class="pillar">
+      <h3>资源与规则：凭什么交付</h3>
+      <div class="q">资源定上限，规则定怎么兑现</div>
+      <ul>
+        <li><b>产能</b>：老师 × 教室 × 时段 × 班额 = 可卖课位，卖超了就交付不了</li>
+        <li><b>固定班</b>：满班率可控，但成人容易缺课</li>
+        <li><b>约课制</b>：学员时间灵活，但每节课坐几人难预测<span class="tag">推断</span></li>
+        <li><b>规则</b>：课时有效期、请假和取消时限、补课、转让、退费</li>
+      </ul>
+      <p class="cap">规则是学员和机构之间的契约，退费规则必须守住法律底线。少儿培训“一次收费不超过 3 个月或 60 课时”的限制，查到的文件都只针对中小学生。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="prose">
+    <h2>底座：贯穿各段的业务对象</h2>
+    <p>所有维度谈来谈去，都是同一组东西在变化。以后不管用表格、教务软件还是自己开发系统，管的都是这些对象和它们的状态。</p>
+  </div>
+  <div class="tablewrap"><div class="scroll">
+    <table style="min-width:640px">
+      <thead><tr><th>对象</th><th>在哪几段出现</th><th>会怎么变化</th></tr></thead>
+      <tbody>
+        <tr><td><b>线索</b></td><td>① ②</td><td>新建 → 跟进中 → 已邀约 → 已到课 → 成交或放弃</td></tr>
+        <tr><td><b>学员</b></td><td>③ 起</td><td>新生 → 在读 → 待续费 → 续费、暂停或流失</td></tr>
+        <tr><td><b>产品</b></td><td>全程</td><td>上架、调价、下架</td></tr>
+        <tr><td><b>订单</b></td><td>③ ⑤</td><td>待付款 → 已付款 → 部分退款或全额退款</td></tr>
+        <tr><td><b>课时账户</b></td><td>③ ④ ⑤</td><td>购买时增加，消课时减少，退费时清算，到期时失效。这是连接教学和钱的核心对象</td></tr>
+        <tr><td><b>班级与课次</b></td><td>④</td><td>开班 → 每节课排定老师、教室、时间 → 已上或取消</td></tr>
+        <tr><td><b>签到、请假与补课</b></td><td>④</td><td>每次上课产生一条，驱动消课</td></tr>
+        <tr><td><b>活动报名</b></td><td>① ② ⑤</td><td>报名 → 参加或缺席，可能产生新线索</td></tr>
+        <tr><td><b>老师与教室</b></td><td>④</td><td>决定产能，也是课酬核算的依据</td></tr>
+      </tbody>
+    </table>
+  </div></div>
+</section>
+
+<section class="prose">
+  <h2>怎么用这个模型</h2>
+  <p>遇到经营问题时，先在公式里找出是哪个因子掉了，再回到主线上对应那一段，看它的关键动作和主责人。</p>
+  <div class="diag">
+    <div><b>新生变少</b>：先看线索数有没有降（①）；线索不少，就看邀约率和到课率（②）；来了不买，就看体验课和顾问沟通（③）。</div>
+    <div><b>老学员不续费</b>：先看出勤率（④）。不常来上课的人很少续费，问题多半在交付或排课，不在续费话术。</div>
+    <div><b>课很满但不赚钱</b>：看满班率分布和课价（④ 和底座）。可能是一部分课坐满、一部分课只来两三个人。</div>
+    <div><b>退费纠纷多</b>：看规则（底座）。课时有效期、请假补课、退费折算在购买前有没有讲清楚，有没有写明。</div>
+  </div>
+</section>
+
+<section class="prose">
+  <h2>需要你们确认的三件事</h2>
+  <p>模型是通用的，下面三件事决定它在你们机构里的具体样子：</p>
+  <ol class="confirm">
+    <li><b>主营品是期课、课时卡，还是都有？</b> 这决定交付段是“开班排课”还是“约课消课”，也决定课时账户怎么算。</li>
+    <li><b>团队有几个人、怎么分工？</b> 这决定七个职能怎么合并到具体的人身上。</li>
+    <li><b>新学员主要从哪里来，活动现在主要用来干什么？</b> 是引流、替代体验课，还是维系老学员。</li>
+  </ol>
+</section>
+
+<footer class="prose sources">
+  <p>资料说明：公开中文资料多为教务和 CRM（客户关系管理）软件厂商的文章，没有权威的指标定义和行业基准值。本模型是综合行业常见做法整理的，标“推断”的是没有公开数据支撑的判断。</p>
+  <p>参考：
+    <a href="https://www.36kr.com/p/1721763069953">36氪 · 艺术培训行业</a>；
+    <a href="https://www.woshipm.com/operate/4299970.html">人人都是产品经理 · 转化链路</a>；
+    <a href="https://www.woshipm.com/operate/3421227.html">人人都是产品经理 · 课时成本</a>；
+    <a href="https://www.zoho.com.cn/crm/articles/education-lead-conversion.html">Zoho · 教培线索转化</a>；
+    <a href="https://www.zoho.com.cn/crm/articles/crm-for-beijing-edu0402.html">Zoho · 北京教培 CRM</a>；
+    <a href="https://www.cnpp.cn/focus/3510998.html">CNPP · 培训机构岗位</a>；
+    <a href="https://www.yicai.com/news/100138287.html">第一财经 · 预收款与现金流</a>；
+    <a href="https://www.qianzhan.com/analyst/detail/329/200301-c9f23623.html">前瞻 · 负债经营</a>；
+    <a href="https://www.bilibili.com/read/cv43719576">B站 · 教务系统选型</a>；
+    <a href="https://cameronartmuseum.org/?p=230">Cameron Art Museum · 成人课收费</a>；
+    <a href="https://www.allbrightlaw.com/SH/CN/10475/2dd697c570508f5b.aspx">锦天城 · 预付式培训纠纷</a>；
+    <a href="https://m.mp.oeeee.com/a/BAAFRD0000202503141059524.html">南方都市报 · 预付式消费司法解释</a>；
+    <a href="https://wallstreetcn.com/articles/3678588">华尔街见闻 · 中小学校外培训收费</a>。
+  </p>
+</footer>
+
+</main>
+</body>
+</html>
