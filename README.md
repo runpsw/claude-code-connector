@@ -1,10 +1,21 @@
 # 萃艺文化小程序
 
-原生微信小程序 + 微信云开发（无需自建后端）。
+原生微信小程序 + 微信云开发（无需自建后端）。开发调试时可以先用本地后端，不需要开通云开发。
 
-## 部署步骤
+## 本地调试（不需要云开发）
+`server/` 是本地后端：Node.js 内置的 http 和 SQLite，零依赖，直接复用 `cloudfunctions/` 里的业务逻辑，支付固定为模拟支付。
+1. 安装 Node.js 22.13 或更高版本（推荐 24 LTS）。启动时出现 `SQLite is an experimental feature` 警告属正常。
+2. 在项目根目录运行 `node server/index.js`，看到"本地后端已启动：http://127.0.0.1:3000"即可。数据存在 `server/data/local.db`，首次启动自动导入 `db-seed/` 的示例数据；想清空就删掉 `server/data` 文件夹。
+3. 确认 `utils/config.js` 里 `mode: 'local'`。
+4. 开发者工具 → 详情 → 本地设置，勾选"不校验合法域名、web-view（业务域名）、TLS 版本以及 HTTPS 证书"，然后编译。
+5. 本地没有微信登录，所有请求以开发用户 `dev-user` 身份发出，它默认是管理员，所以"我的"页底部能看到"管理后台"。
+6. 网页版后台：浏览器打开 http://127.0.0.1:3000/admin-web/ ，接口地址填 http://127.0.0.1:3000/admin ，令牌见启动时控制台输出（也可以用环境变量 `ADMIN_TOKEN` 指定）。
+
+注意：本地模式只能在开发者工具的模拟器里用，真机预览访问不到 127.0.0.1。换端口用环境变量 `PORT`，同时改 `utils/config.js` 的 `localBase`。
+
+## 部署到云开发
 1. 用**真实 AppID** 导入项目（云开发不支持测试号），把 `project.config.json` 的 `appid` 改掉。
-2. 开发者工具 → 云开发 → 开通环境，把环境 ID 填入 `app.js` 的 `YOUR_ENV_ID`。
+2. 开发者工具 → 云开发 → 开通环境，把环境 ID 填入 `utils/config.js` 的 `cloudEnv`，并把 `mode` 改成 `'cloud'`。
 3. 数据库新建集合 `courses`、`activities`、`orders`，并分别导入 `db-seed/courses.json`、`db-seed/activities.json`。
    权限：`courses`、`activities` 设为"所有用户可读，仅管理员可写"；`orders` 设为"仅管理员可读写"（云函数不受限）。
 4. 右键 `cloudfunctions` 下每个云函数 → "上传并部署：云端安装依赖"（共 4 个：order、payCallback、mine、admin）。

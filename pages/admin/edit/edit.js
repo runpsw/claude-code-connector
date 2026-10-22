@@ -13,12 +13,12 @@ Page({
   async pick() {
     try {
       const r = await wx.chooseMedia({ count: 1, mediaType: ['image'], sizeType: ['compressed'] })
-      const filePath = r.tempFiles[0].tempFilePath
-      const ext = (filePath.match(/\.\w+$/) || ['.jpg'])[0]
       wx.showLoading({ title: '上传中' })
-      const up = await wx.cloud.uploadFile({ cloudPath: `covers/${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`, filePath })
-      this.setData({ 'form.cover': up.fileID })
-    } catch (e) { /* 取消选择 */ } finally { wx.hideLoading() }
+      const cover = await api.uploadCover(r.tempFiles[0].tempFilePath)
+      this.setData({ 'form.cover': cover })
+    } catch (e) {
+      if (!/cancel/.test(e.errMsg || '')) wx.showToast({ title: e.message || '上传失败', icon: 'none' })
+    } finally { wx.hideLoading() }
   },
   async save() {
     const f = { ...this.data.form }
