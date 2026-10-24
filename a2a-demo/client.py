@@ -26,18 +26,23 @@ def rpc(url, method, params):
     return resp["result"]
 
 
-def send_text(card, text, context_id=None):
+def send_text(card, text, context_id=None, task_id=None):
     msg = {"kind": "message", "role": "user", "messageId": str(uuid.uuid4()),
            "parts": [{"kind": "text", "text": text}]}
     if context_id:
         msg["contextId"] = context_id
+    if task_id:  # 带上 taskId 表示“这是对那个任务的回复”，而不是新任务
+        msg["taskId"] = task_id
     return rpc(card["url"], "message/send", {"message": msg})
+
+
+def status_text(task):
+    return "\n".join(p["text"] for p in task["status"].get("message", {}).get("parts", []))
 
 
 def result_text(task):
     if task["status"]["state"] != "completed":
-        parts = task["status"].get("message", {}).get("parts", [])
-        raise RuntimeError(f"任务 {task['status']['state']}：{parts}")
+        raise RuntimeError(f"任务 {task['status']['state']}：{status_text(task)}")
     return "\n".join(p["text"] for a in task["artifacts"] for p in a["parts"] if p["kind"] == "text")
 
 
@@ -58,8 +63,13 @@ if __name__ == "__main__":
     code = result_text(t1)
     print(f"\n=== {writer['name']}（任务 {t1['id'][:8]}，{t1['status']['state']}）===\n{code}")
 
-    # 3. 委托审查，用同一个 contextId 把两步串成一次协作
-    t2 = send_text(reviewer, f"审查下面的代码，指出问题，简短回答：\n{code}", t1["contextId"])
+    # 3. 委托审查，用同一个 contextId 把两步串成一次协作。
+    #    故意不附代码：审查方信息不足，会把任务置为 input-required 并反问
+    t2 = send_text(reviewer, "帮我审查一下刚写好的 is_palindrome 函数，简短回答。", t1["contextId"])
+    if t2["status"]["state"] == "input-required":
+        print(f"\n{reviewer['name']} 反问（任务 {t2['id'][:8]}，input-required）：{status_text(t2)}")
+        print("→ 补发代码，续接同一个任务")
+        t2 = send_text(reviewer, code, t1["contextId"], task_id=t2["id"])
     print(f"\n=== {reviewer['name']}（任务 {t2['id'][:8]}，{t2['status']['state']}）===\n{result_text(t2)}")
 
     # 4. 事后按 id 查询任务（tasks/get）

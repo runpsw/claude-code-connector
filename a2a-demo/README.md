@@ -28,8 +28,14 @@ curl -X POST http://127.0.0.1:9001/ -H 'Content-Type: application/json' -d '{
     "parts": [{"kind": "text", "text": "写一个 hello world"}]}}}'
 ```
 
-返回的 `result` 是一个 Task：`status.state` 为 `completed` 或 `failed`，结果在 `artifacts[].parts[]` 里。
+返回的 `result` 是一个 Task：`status.state` 为 `completed`、`failed` 或 `input-required`，结果在 `artifacts[].parts[]` 里。
+
+## input-required：远程智能体反问
+
+服务端在提示词前加了一条约定：信息不足时只回复 `NEED_INPUT: <问题>`。服务端看到这个前缀，就不产出 Artifact，而是把任务置为 `input-required`，问题放在 `status.message` 里。客户端回答时在 message 里带上同一个 `taskId`，服务端把这条回复追加到 `history`，拼成完整对话交给 CLI 重跑。只有处于 `input-required` 的任务能续接；对已完成的任务再发消息会返回错误 `-32602`。
+
+`client.py` 第 3 步故意只说“审查刚写好的函数”而不附代码，就是为了触发这个流程。
 
 ## 刻意省略的部分
 
-为了保持最小，这里没有实现：流式（`message/stream` + SSE）、推送通知、`input-required` 多轮交互、认证、任务持久化。任务是同步执行的，CLI 跑完才返回。v1.0 对部分字段和方法名有调整，接入正式 SDK 时以 a2a-protocol.org 的规范为准。
+为了保持最小，这里没有实现：流式（`message/stream` + SSE）、推送通知、认证、任务持久化。任务是同步执行的，CLI 跑完才返回。v1.0 对部分字段和方法名有调整，接入正式 SDK 时以 a2a-protocol.org 的规范为准。
